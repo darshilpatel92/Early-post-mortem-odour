@@ -1,0 +1,111 @@
+---
+title: "Normalize Data"
+author: "Wesley Burr"
+date: "29/03/2022"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+```
+
+## Normalize Data
+
+We will load each of the data files, identify the 'primary' peak for
+Bromobenze, then normalize all Areas to be relative areas to the
+reference standard.
+
+```{r}
+load("/home/wburr/Darshil_Compounds/dat/RH1new.rda")
+bromo <- RH1newm %>% 
+           group_by(Sample) %>% 
+           subset(Name == "Benzene, bromo-") %>%
+           filter(Area == max(Area))
+split_RH1new <- RH1newm %>% 
+                group_by(Sample) %>%
+                group_split()
+for(j in 1:length(split_RH1new)) {
+  split_RH1new[[j]]$Area <- split_RH1new[[j]]$Area / unlist(bromo[j, "Area"])
+}
+RH1newm <- do.call("rbind", split_RH1new)
+save(file = "/home/wburr/Darshil_Compounds/dat/Normalized_RDA/RH1newn.rda", RH1newm)
+```
+
+
+```{r}
+load("/home/wburr/Darshil_Compounds/dat/RH2.rda")
+bromo <- RH2m %>% 
+           group_by(Sample) %>% 
+           subset(Name == "Benzene, bromo-") %>%
+           filter(Area == max(Area))
+split_RH2 <- RH2m %>% 
+                group_by(Sample) %>%
+                group_split()
+for(j in 1:length(split_RH1new)) {
+  split_RH2[[j]]$Area <- split_RH2[[j]]$Area / unlist(bromo[j, "Area"])
+}
+RH2 <- do.call("rbind", split_RH2)
+save(file = "/home/wburr/Darshil_Compounds/dat/Normalized_RDA/RH2.rda", RH2m)
+```
+
+
+
+Because the name of Donor 3 is different copying the first code for the first four Donor I will remind my future self to keep the names of the files same regardless of situation. Life lesson by R
+
+```{r}
+load("/home/wburr/Darshil_Compounds/dat/RH3N1.rda")
+bromo <- RH3N1m %>% 
+           group_by(Sample) %>% 
+           subset(Name == "Benzene, bromo-") %>%
+           filter(Area == max(Area))
+split_RH3N1 <- RH3N1m %>% 
+                group_by(Sample) %>%
+                group_split()
+for(j in 1:length(split_RH3N1)) {
+  split_RH3N1[[j]]$Area <- split_RH3N1[[j]]$Area / unlist(bromo[j, "Area"])
+}
+RH3N1 <- do.call("rbind", split_RH3N1)
+save(file = "/home/wburr/Darshil_Compounds/dat/Normalized_RDA/RH3N1n.rda", RH3N1m)
+  
+```
+
+```{r}
+load("/home/wburr/Darshil_Compounds/dat/RH4.rda")
+bromo <- RH4m %>% 
+           group_by(Sample) %>% 
+           subset(Name == "Benzene, bromo-") %>%
+           filter(Area == max(Area))
+split_RH4 <- RH4m %>% 
+                group_by(Sample) %>%
+                group_split()
+for(j in 1:length(split_RH4)) {
+  split_RH4[[j]]$Area <- split_RH4[[j]]$Area / unlist(bromo[j, "Area"])
+}
+RH4m <- do.call("rbind", split_RH4)
+save(file = "/home/wburr/Darshil_Compounds/dat/Normalized_RDA/RH4n.rda", RH4m)
+```
+
+
+```{r}
+for(k in 6:9) {
+  load(paste0("/home/wburr/Darshil_Compounds/dat/RH", k, ".rda"))
+  RH <- get(x = paste0("RH", k, "m"))
+  bromo <- RH %>% 
+           group_by(Sample) %>% 
+           subset(Name == "Benzene, bromo-") %>%
+           filter(Area == max(Area))
+  split_RH <- RH %>% 
+                group_by(Sample) %>%
+                group_split()
+  for(j in 1:length(split_RH)) {
+    split_RH[[j]]$Area <- split_RH[[j]]$Area / unlist(bromo[j, "Area"])
+  }
+  RH <- do.call("rbind", split_RH)
+  assign(x = paste0("RH", k, "m"), value = RH)
+  save(file = paste0("/home/wburr/Darshil_Compounds/dat/Normalized_RDA/RH", k, "n.rda"), list = paste0("RH", k, "m"))
+}
+```

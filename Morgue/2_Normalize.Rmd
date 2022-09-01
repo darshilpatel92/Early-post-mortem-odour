@@ -1,0 +1,77 @@
+---
+title: "Normalize Data"
+author: "Wesley Burr"
+date: "29/03/2022"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+```
+
+## Normalize Data
+
+We will load each of the data files, identify the 'primary' peak for
+Bromobenze, then normalize all Areas to be relative areas to the
+reference standard.
+
+```{r}
+load("/home/wburr/Darshil_Compounds/dat/M_DONOR_1.rda")
+bromo <- M_DONOR_1m %>% 
+           group_by(Sample) %>% 
+           subset(Name == "Benzene, bromo-") %>%
+           filter(Area == max(Area))
+split_M_DONOR_1 <- M_DONOR_1m %>% 
+                group_by(Sample) %>%
+                group_split()
+for(j in 1:length(split_M_DONOR_1)) {
+  split_M_DONOR_1[[j]]$Area <- split_M_DONOR_1[[j]]$Area / unlist(bromo[j, "Area"])
+}
+foot1m <- do.call("rbind", split_M_DONOR_1)
+save(file = "/home/wburr/Darshil_Compounds/dat/Normalized_RDA/M_DONOR_1n.rda", M_DONOR_1m)
+```
+
+This worked, now let's just loop the others to save writing:
+
+```{r}
+for(k in 2:4) {
+  load(paste0("/home/wburr/Darshil_Compounds/dat/M_DONOR_", k, ".rda"))
+  M_DONOR_ <- get(x = paste0("M_DONOR_", k, "m"))
+  bromo <- M_DONOR_ %>% 
+           group_by(Sample) %>% 
+           subset(Name == "Benzene, bromo-") %>%
+           filter(Area == max(Area))
+  split_M_DONOR_ <- M_DONOR_ %>% 
+                group_by(Sample) %>%
+                group_split()
+  for(j in 1:length(split_M_DONOR_)) {
+    split_M_DONOR_[[j]]$Area <- split_M_DONOR_[[j]]$Area / unlist(bromo[j, "Area"])
+  }
+  M_DONOR_ <- do.call("rbind", split_M_DONOR_)
+  assign(x = paste0("M_DONOR_", k, "m"), value = M_DONOR_)
+  save(file = paste0("/home/wburr/Darshil_Compounds/dat/Normalized_RDA/M_DONOR_", k, "n.rda"), list = paste0("M_DONOR_", k, "m"))
+}
+```
+```{r}
+for(k in 6:9) {
+  load(paste0("/home/wburr/Darshil_Compounds/dat/M_DONOR_", k, ".rda"))
+  M_DONOR_ <- get(x = paste0("M_DONOR_", k, "m"))
+  bromo <- M_DONOR_ %>% 
+           group_by(Sample) %>% 
+           subset(Name == "Benzene, bromo-") %>%
+           filter(Area == max(Area))
+  split_M_DONOR_ <- M_DONOR_ %>% 
+                group_by(Sample) %>%
+                group_split()
+  for(j in 1:length(split_M_DONOR_)) {
+    split_M_DONOR_[[j]]$Area <- split_M_DONOR_[[j]]$Area / unlist(bromo[j, "Area"])
+  }
+  M_DONOR_ <- do.call("rbind", split_M_DONOR_)
+  assign(x = paste0("M_DONOR_", k, "m"), value = M_DONOR_)
+  save(file = paste0("/home/wburr/Darshil_Compounds/dat/Normalized_RDA/M_DONOR_", k, "n.rda"), list = paste0("M_DONOR_", k, "m"))
+}
+```

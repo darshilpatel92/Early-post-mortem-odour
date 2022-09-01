@@ -1,0 +1,332 @@
+---
+title: "Load & Review Data v2 (get all REST donors sorted)"
+author: "Wesley"
+date: "2022/03/28"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load all of the REST Data
+
+To start, we need to load all of the Excel files. To do this, we will use the
+readxl package. In addition, we're going to need to manipulate strings in 
+the following, so let's pre-emptively load that package.
+
+```{r libraries, error = FALSE, message = FALSE, warning = FALSE}
+library("readxl")
+library("stringr")
+```
+
+### Start with REST donor 1, as Template
+
+Foot 1 has many sheets, each of which is a nicely organized listing of VOCs
+as detected by the GCxGC system's built-in scanning software, and exported. 
+We will load them all. 
+
+```{r load_data}
+sheets <- excel_sheets("/home/wburr/Darshil_Compounds/REST/RH1new.xlsx")  # note: spaces in names
+RH1new <- lapply(sheets, FUN = function(x) {
+           read_xlsx(path = "/home/wburr/Darshil_Compounds/REST/RH1new.xlsx",
+                     sheet = x) })
+sheets <- str_replace_all(sheets, " ", "_")
+names(RH1new) <- sheets
+```
+
+Having things organized by sample is a good thing, but we really will
+find it annoying finding things long-term. In the following, I will take each
+of the lists of compounds relevant to Foot 1, and merge them into a single
+data.frame object, so we can then filter that frame down to get a specific
+compound, or a specific day/observation, and so on.
+
+Before we do this, the first sheets has the observations duplicated across
+the columns (wups!). Removing that:
+
+```{r remove_sheet1}
+RH1new[[1]] <- RH1new[[1]][, 1:ncol(RH1new[[2]])]
+names(RH1new[[1]]) <- names(RH1new[[2]])  # fix names of sheet 1
+```
+
+```{r merge_sheets}
+RH1newm <- do.call("rbind", RH1new)
+names(RH1newm) <- c("Peak#","PeakNum", "Sample", "Name", "Formula", "RTs", "Similarity",
+                   "Area", "Height", "QuantMass", "BaseMass", "QuantSN", "PeakSN")
+```
+
+A quick print of the data structure shows that the RTs, QuantMass and BaseMass
+won't be usable as numbers. The RTs need to be split, as well.
+
+```{r split_RTs}
+RT1 <- as.numeric(
+         unlist(
+           lapply(strsplit(RH1newm$RTs, ","), FUN = "[[", 1)
+         )
+       )
+RT2 <- as.numeric(
+         unlist(
+           lapply(strsplit(RH1newm$RTs, ","), FUN = "[[", 2)
+         )
+       )
+RH1newm <- data.frame(RH1newm[, c(1:5, 6:13)], RT1 = RT1, RT2 = RT2)
+```
+
+```{r samples}
+unique(RH1newm$Sample)
+save(file = "/home/wburr/Darshil_Compounds/REST/RH1new2.rda", RH1newm)
+```
+
+### Now Do REST donor 2
+
+```{r load_data2}
+sheets <- excel_sheets("/home/wburr/Darshil_Compounds/REST/RH2.xlsx")  # note: spaces in names
+RH2 <- lapply(sheets, FUN = function(x) {
+           read_xlsx(path = "/home/wburr/Darshil_Compounds/REST/RH2.xlsx",
+                     sheet = x) })
+sheets <- str_replace_all(sheets, " ", "_")
+names(RH2) <- sheets
+
+RH2m <- do.call("rbind", RH2)
+names(RH2m) <- c("Peak#","PeakNum", "Sample", "Name", "Formula", "RTs", "Similarity",
+                   "Area", "Height", "QuantMass", "BaseMass", "QuantSN", "PeakSN")
+                   
+```
+
+```{r split_RTs2}
+RT1 <- as.numeric(
+         unlist(
+           lapply(strsplit(RH2m$RTs, ","), FUN = "[[", 1)
+         )
+       )
+RT2 <- as.numeric(
+         unlist(
+           lapply(strsplit(RH2m$RTs, ","), FUN = "[[", 2)
+         )
+       )
+RH2m <- data.frame(RH2m[, c(1:5, 6:13)], RT1 = RT1, RT2 = RT2)
+```
+
+```{r samples2}
+unique(RH2m$Sample)
+save(file = "/home/wburr/Darshil_Compounds/REST/RH2.rda", RH2m)
+```
+
+### Now Do Donor 3
+
+```{r load_data3}
+sheets <- excel_sheets("/home/wburr/Darshil_Compounds/REST/RH3N1.xlsx")  # note: spaces in names
+RH3N1 <- lapply(sheets, FUN = function(x) {
+           read_xlsx(path = "/home/wburr/Darshil_Compounds/REST/RH3N1.xlsx",
+                     sheet = x) })
+sheets <- str_replace_all(sheets, " ", "_")
+names(RH3N1) <- sheets
+
+RH3N1m <- do.call("rbind", RH3N1)
+names(RH3N1m) <- c("Peak#","Peaknumber", "Sample", "Name", "Formula", "RTs", "Similarity",
+                   "Area", "Height", "QuantMass", "BaseMass", "QuantSN", "PeakSN")
+
+```
+
+```{r split_RTs3}
+# filter out the missing RTs/names
+RH3N1m <- RH3N1m[!is.na(RH3N1m$Name), ]
+# which-split
+which_split <- unlist(lapply(strsplit(RH3N1m$RTs, ","), length))
+RH3N1mA <- RH3N1m[which_split == 1, ]
+RH3N1mB <- RH3N1m[which_split == 2, ]
+
+# the RTs that can be split, split
+RT1 <- as.numeric(
+         unlist(
+           lapply(strsplit(RH3N1mB$RTs, ","), FUN = "[[", 1)
+         )
+       )
+RT2 <- as.numeric(
+         unlist(
+           lapply(strsplit(RH3N1mB$RTs, ","), FUN = "[[", 2)
+         )
+       )
+# merge them. The 1mA is probably garbage anyway, but it's kept at this stage JIC
+RH3N1mB <- data.frame(RH3N1mB[, c(1:5, 6:13)], RT1 = RT1, RT2 = RT2)
+RH3N1mA <- data.frame(RH3N1mA[, c(1:5, 6:13)], RT1 = NA, RT2 = NA)
+RH3N1m <- rbind(RH3N1mA, RH3N1mB)
+```
+
+```{r samples3}
+unique(RH3N1m$Sample)
+save(file = "/home/wburr/Darshil_Compounds/REST/RH3N1.rda", RH3N1m)
+```
+
+### Now Do REST donor 4
+
+```{r load_data4}
+sheets <- excel_sheets("/home/wburr/Darshil_Compounds/REST/RH4.xlsx")  # note: spaces in names
+RH4 <- lapply(sheets, FUN = function(x) {
+           read_xlsx(path = "/home/wburr/Darshil_Compounds/REST/RH4.xlsx",
+                     sheet = x) })
+sheets <- str_replace_all(sheets, " ", "_")
+names(RH4) <- sheets
+
+RH4m <- do.call("rbind", RH4)
+names(RH4m) <- c("Peak#","PeakNum", "Sample", "Name", "Formula", "RTs", "Similarity",
+                   "Area", "Height", "QuantMass", "BaseMass", "QuantSN", "PeakSN")
+
+```
+
+```{r split_RTs4}
+RT1 <- as.numeric(
+         unlist(
+           lapply(strsplit(RH4m$RTs, ","), FUN = "[[", 1)
+         )
+       )
+RT2 <- as.numeric(
+         unlist(
+           lapply(strsplit(RH4m$RTs, ","), FUN = "[[", 2)
+         )
+       )
+RH4m <- data.frame(RH4m[, c(1:5, 6:13)], RT1 = RT1, RT2 = RT2)
+```
+
+```{r samples2}
+unique(RH4m$Sample)
+save(file = "/home/wburr/Darshil_Compounds/REST/RH4.rda", RH4m)
+```
+
+### Now Do REST donor 6
+
+```{r load_data5}
+sheets <- excel_sheets("/home/wburr/Darshil_Compounds/REST/RH6.xlsx")  # note: spaces in names
+RH6 <- lapply(sheets, FUN = function(x) {
+           read_xlsx(path = "/home/wburr/Darshil_Compounds/REST/RH6.xlsx",
+                     sheet = x) })
+sheets <- str_replace_all(sheets, " ", "_")
+names(RH6) <- sheets
+
+RH6m <- do.call("rbind", RH6)
+names(RH6m) <- c("Peak#","PeakNumber", "Sample", "Name", "Formula", "RTs", "Similarity",
+                   "Area", "Height", "QuantMass", "BaseMass", "QuantSN", "PeakSN")
+```
+
+```{r split_RTs4}
+RT1 <- as.numeric(
+         unlist(
+           lapply(strsplit(RH6m$RTs, ","), FUN = "[[", 1)
+         )
+       )
+RT2 <- as.numeric(
+         unlist(
+           lapply(strsplit(RH6m$RTs, ","), FUN = "[[", 2)
+         )
+       )
+RH6m <- data.frame(RH6m[, c(1:5, 6:13)], RT1 = RT1, RT2 = RT2)
+```
+
+```{r samples2}
+unique(RH6m$Sample)
+save(file = "/home/wburr/Darshil_Compounds/REST/RH6.rda", RH6m)
+```
+
+
+
+### Now Do Donor 7
+
+```{r load_data7}
+sheets <- excel_sheets("/home/wburr/Darshil_Compounds/REST/RH7.xlsx")  # note: spaces in names
+RH7 <- lapply(sheets, FUN = function(x) {
+           read_xlsx(path = "/home/wburr/Darshil_Compounds/REST/RH7.xlsx",
+                     sheet = x) })
+sheets <- str_replace_all(sheets, " ", "_")
+names(RH7) <- sheets
+
+RH7m <- do.call("rbind", RH7)
+names(RH7m) <- c("Peak#","PeakNum", "Sample", "Name", "Formula", "RTs", "Similarity",
+                   "Area", "Height", "QuantMass", "BaseMass", "QuantSN", "PeakSN")
+```
+
+```{r split_RTs4}
+RT1 <- as.numeric(
+         unlist(
+           lapply(strsplit(RH7m$RTs, ","), FUN = "[[", 1)
+         )
+       )
+RT2 <- as.numeric(
+         unlist(
+           lapply(strsplit(RH7m$RTs, ","), FUN = "[[", 2)
+         )
+       )
+RH7m <- data.frame(RH7m[, c(1:5, 6:13)], RT1 = RT1, RT2 = RT2)
+```
+
+```{r samples2}
+unique(RH7m$Sample)
+save(file = "/home/wburr/Darshil_Compounds/REST/RH7.rda", RH7m)
+```
+
+### Now Do Donor 8
+
+```{r load_data8}
+sheets <- excel_sheets("/home/wburr/Darshil_Compounds/REST/RH8.xlsx")  # note: spaces in names
+RH8 <- lapply(sheets, FUN = function(x) {
+           read_xlsx(path = "/home/wburr/Darshil_Compounds/REST/RH8.xlsx",
+                     sheet = x) })
+sheets <- str_replace_all(sheets, " ", "_")
+names(RH8) <- sheets
+
+RH8m <- do.call("rbind", RH8)
+names(RH8m) <- c("Peak#","PeakNum", "Sample", "Name", "Formula", "RTs", "Similarity",
+                   "Area", "Height", "QuantMass", "BaseMass", "QuantSN", "PeakSN")
+```
+
+```{r split_RTs4}
+RT1 <- as.numeric(
+         unlist(
+           lapply(strsplit(RH8m$RTs, ","), FUN = "[[", 1)
+         )
+       )
+RT2 <- as.numeric(
+         unlist(
+           lapply(strsplit(RH8m$RTs, ","), FUN = "[[", 2)
+         )
+       )
+RH8m <- data.frame(RH8m[, c(1:5, 6:13)], RT1 = RT1, RT2 = RT2)
+```
+
+```{r samples2}
+unique(RH8m$Sample)
+save(file = "/home/wburr/Darshil_Compounds/REST/RH8.rda", RH8m)
+```
+
+### Now Do Donor 9 
+
+```{r load_data9}
+sheets <- excel_sheets("/home/wburr/Darshil_Compounds/REST/RH9.xlsx")  # note: spaces in names
+RH9  <- lapply(sheets, FUN = function(x) {
+           read_xlsx(path = "/home/wburr/Darshil_Compounds/REST/RH9.xlsx",
+                     sheet = x) })
+sheets <- str_replace_all(sheets, " ", "_")
+names(RH9) <- sheets
+
+RH9m <- do.call("rbind", RH9)
+names(RH9m) <- c( "Peak #", "Peak Number", "Sample",	"Name",	"Formula", "RTs", "Similarity", "Area",	                             "Height",	"Quant Masses", "Base Mass", "Quant S/N", "Peak S/N")
+```
+
+```{r split_RTs4}
+RT1 <- as.numeric(
+         unlist(
+           lapply(strsplit(RH9m$RTs, ","), FUN = "[[", 1)
+         )
+       )
+RT2 <- as.numeric(
+         unlist(
+           lapply(strsplit(RH9m$RTs, ","), FUN = "[[", 2)
+         )
+       )
+RH9m <- data.frame(RH9m[, c(1:5, 6:13)], RT1 = RT1, RT2 = RT2)
+```
+
+```{r samples2}
+unique(RH9m$Sample)
+save(file = "/home/wburr/Darshil_Compounds/dat/RH9.rda", RH9m)
+```
+

@@ -1,0 +1,328 @@
+---
+title: "Load & Review Data v2 (get all Morgue Donors sorted)"
+author: "Wesley"
+date: "2022/05/03"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load all of the Morgue Data
+
+To start, we need to load all of the Excel files. To do this, we will use the
+readxl package. In addition, we're going to need to manipulate strings in 
+the following, so let's pre-emptively load that package.
+
+```{r libraries, error = FALSE, message = FALSE, warning = FALSE}
+library("readxl")
+library("stringr")
+```
+
+### Start with M_DONOR_1, as Template
+
+Foot 1 has many sheets, each of which is a nicely organized listing of VOCs
+as detected by the GCxGC system's built-in scanning software, and exported. 
+We will load them all. 
+
+```{r load_data}
+sheets <- excel_sheets("MORGUE/M_DONOR_1.xlsx")  # note: spaces in names
+M_DONOR_1 <- lapply(sheets, FUN = function(x) {
+           read_xlsx(path = "MORGUE/M_DONOR_1.xlsx",
+                     sheet = x) })
+sheets <- str_replace_all(sheets, " ", "_")
+names(M_DONOR_1) <- sheets
+```
+
+
+Having things organized by sample is a good thing, but we really will
+find it annoying finding things long-term. In the following, I will take each
+of the lists of compounds relevant to Foot 1, and merge them into a single
+data.frame object, so we can then filter that frame down to get a specific
+compound, or a specific day/observation, and so on.
+
+```{r merge_sheets}
+M_DONOR_1m <- do.call("rbind", M_DONOR_1)
+names(M_DONOR_1m) <- c("PeakNum", "Sample", "Name", "Formula", "RTs","1st Dimension Time", "2nd Dimension Time", "Similarity",
+                   "Area", "Height", "QuantMass", "BaseMass", "QuantSN", "PeakSN",
+                   "Type", "Conc", "ConcUnits")
+```
+
+A quick print of the data structure shows that the RTs, QuantMass and BaseMass
+won't be usable as numbers. The RTs need to be split, as well.
+
+```{r split_RTs}
+RT1 <- as.numeric(
+         unlist(
+           lapply(strsplit(M_DONOR_1m$RTs, ","), FUN = "[[", 1)
+         )
+       )
+RT2 <- as.numeric(
+         unlist(
+           lapply(strsplit(M_DONOR_1m$RTs, ","), FUN = "[[", 2)
+         )
+       )
+M_DONOR_1m <- data.frame(M_DONOR_1m[, c(1:4, 6:17)], RT1 = RT1, RT2 = RT2)
+```
+
+```{r samples}
+unique(M_DONOR_1m$Sample)
+save(file = "dat/M_DONOR_1.rda", M_DONOR_1m)
+```
+
+### Now Do M_DONOR_2
+
+```{r load_data2}
+sheets <- excel_sheets("MORGUE/M_DONOR_2.xlsx")  # note: spaces in names
+M_DONOR_2 <- lapply(sheets, FUN = function(x) {
+           read_xlsx(path = "MORGUE/M_DONOR_2.xlsx",
+                     sheet = x) })
+sheets <- str_replace_all(sheets, " ", "_")
+names(M_DONOR_2) <- sheets
+
+M_DONOR_2m <- do.call("rbind", M_DONOR_2)
+names(M_DONOR_2m) <- c("PeakNum", "Sample", "Name", "Formula", "RTs","1st Dimension Time", "2nd Dimension Time", "Similarity",
+                   "Area", "Height", "QuantMass", "BaseMass", "QuantSN", "PeakSN",
+                   "Type", "Conc", "ConcUnits")
+```
+
+```{r split_RTs2}
+RT1 <- as.numeric(
+         unlist(
+           lapply(strsplit(M_DONOR_2m$RTs, ","), FUN = "[[", 1)
+         )
+       )
+RT2 <- as.numeric(
+         unlist(
+           lapply(strsplit(M_DONOR_2m$RTs, ","), FUN = "[[", 2)
+         )
+       )
+M_DONOR_2m <- data.frame(M_DONOR_2m[, c(1:4, 6:17)], RT1 = RT1, RT2 = RT2)
+```
+
+```{r samples2}
+unique(M_DONOR_2m$Sample)
+save(file = "dat/M_DONOR_2.rda", M_DONOR_2m)
+```
+
+### Now Do M_DONOR_3
+
+```{r load_data3}
+sheets <- excel_sheets("MORGUE/M_DONOR_3.xlsx")  # note: spaces in names
+M_DONOR_3 <- lapply(sheets, FUN = function(x) {
+           read_xlsx(path = "MORGUE/M_DONOR_3.xlsx",
+                     sheet = x) })
+sheets <- str_replace_all(sheets, " ", "_")
+names(M_DONOR_3) <- sheets
+
+M_DONOR_3m <- do.call("rbind", M_DONOR_3)
+names(M_DONOR_3m) <- c("PeakNum", "Sample", "Name", "Formula", "RTs", "1st Dimension Time", "2nd Dimension Time", "Similarity",
+                   "Area", "Height", "QuantMass", "BaseMass", "QuantSN", "PeakSN",
+                   "Type", "Conc", "ConcUnits")
+```
+
+```{r split_RTs3}
+RT1 <- as.numeric(
+         unlist(
+           lapply(strsplit(M_DONOR_3m$RTs, ","), FUN = "[[", 1)
+         )
+       )
+RT2 <- as.numeric(
+         unlist(
+           lapply(strsplit(M_DONOR_3m$RTs, ","), FUN = "[[", 2)
+         )
+       )
+M_DONOR_3m <- data.frame(M_DONOR_3m[, c(1:4, 6:17)], RT1 = RT1, RT2 = RT2)
+```
+
+```{r samples3}
+unique(M_DONOR_3m$Sample)
+save(file = "dat/M_DONOR_3.rda", M_DONOR_3m)
+```
+
+### Now Do M_DONOR_4
+
+```{r load_data4}
+sheets <- excel_sheets("MORGUE/M_DONOR_4.xlsx")  # note: spaces in names
+M_DONOR_4 <- lapply(sheets, FUN = function(x) {
+           read_xlsx(path = "MORGUE/M_DONOR_4.xlsx",
+                     sheet = x) })
+sheets <- str_replace_all(sheets, " ", "_")
+names(M_DONOR_4) <- sheets
+
+M_DONOR_4m <- do.call("rbind", M_DONOR_4)
+names(M_DONOR_4m) <- c("PeakNum", "Sample", "Name", "Formula", "RTs", "1st Dimension Time", "2nd Dimension Time", "Similarity",
+                   "Area", "Height", "QuantMass", "BaseMass", "QuantSN", "PeakSN",
+                   "Type", "Conc", "ConcUnits")
+```
+
+```{r split_RTs4}
+RT1 <- as.numeric(
+         unlist(
+           lapply(strsplit(M_DONOR_4m$RTs, ","), FUN = "[[", 1)
+         )
+       )
+RT2 <- as.numeric(
+         unlist(
+           lapply(strsplit(M_DONOR_4m$RTs, ","), FUN = "[[", 2)
+         )
+       )
+M_DONOR_4m <- data.frame(M_DONOR_4m[, c(1:4, 6:17)], RT1 = RT1, RT2 = RT2)
+```
+
+```{r samples4}
+unique(M_DONOR_4m$Sample)
+save(file = "dat/M_DONOR_4.rda", M_DONOR_4m)
+```
+
+### Now Do M_DONOR_6
+
+```{r load_data5}
+sheets <- excel_sheets("MORGUE/M_DONOR_6.xlsx")  # note: spaces in names
+M_DONOR_6 <- lapply(sheets, FUN = function(x) {
+           read_xlsx(path = "MORGUE/M_DONOR_6.xlsx",
+                     sheet = x) })
+sheets <- str_replace_all(sheets, " ", "_")
+names(M_DONOR_6) <- sheets
+
+M_DONOR_6m <- do.call("rbind", M_DONOR_6)
+names(M_DONOR_6m) <- c("PeakNum", "Sample", "Name", "Formula", "RTs","1st Dimension Time", "2nd Dimension Time", "Similarity",
+                   "Area", "Height", "QuantMass", "BaseMass", "QuantSN", "PeakSN",
+                   "Type", "Conc", "ConcUnits")
+```
+
+```{r split_RTs6}
+RT1 <- as.numeric(
+         unlist(
+           lapply(strsplit(M_DONOR_6m$RTs, ","), FUN = "[[", 1)
+         )
+       )
+RT2 <- as.numeric(
+         unlist(
+           lapply(strsplit(M_DONOR_6m$RTs, ","), FUN = "[[", 2)
+         )
+       )
+M_DONOR_6m <- data.frame(M_DONOR_6m[, c(1:4, 6:17)], RT1 = RT1, RT2 = RT2)
+```
+
+```{r samples6}
+unique(M_DONOR_6m$Sample)
+save(file = "dat/M_DONOR_6.rda", M_DONOR_6m)
+```
+
+### Now Do M_DONOR_7
+
+```{r load_data6}
+sheets <- excel_sheets("MORGUE/M_DONOR_7.xlsx")  # note: spaces in names
+M_DONOR_7 <- lapply(sheets, FUN = function(x) {
+           read_xlsx(path = "MORGUE/M_DONOR_7.xlsx",
+                     sheet = x) })
+sheets <- str_replace_all(sheets, " ", "_")
+names(M_DONOR_7) <- sheets
+
+M_DONOR_7m <- do.call("rbind", M_DONOR_7)
+names(M_DONOR_7m) <- c("PeakNum", "Sample", "Name", "Formula", "RTs","1st Dimension Time", "2nd Dimension Time", "Similarity",
+                   "Area", "Height", "QuantMass", "BaseMass", "QuantSN", "PeakSN",
+                   "Type", "Conc", "ConcUnits")
+```
+
+```{r split_RTs7}
+RT1 <- as.numeric(
+         unlist(
+           lapply(strsplit(M_DONOR_7m$RTs, ","), FUN = "[[", 1)
+         )
+       )
+RT2 <- as.numeric(
+         unlist(
+           lapply(strsplit(M_DONOR_7m$RTs, ","), FUN = "[[", 2)
+         )
+       )
+M_DONOR_7m <- data.frame(M_DONOR_7m[, c(1:4, 6:17)], RT1 = RT1, RT2 = RT2)
+```
+
+```{r samples7}
+unique(M_DONOR_7m$Sample)
+save(file = "dat/M_DONOR_7", M_DONOR_7m)
+```
+
+### Now Do M_DONOR_8
+
+```{r load_data7}
+sheets <- excel_sheets("MORGUE/M_DONOR_8.xlsx")  # note: spaces in names
+M_DONOR_8 <- lapply(sheets, FUN = function(x) {
+           read_xlsx(path = "MORGUE/M_DONOR_8.xlsx",
+                     sheet = x) })
+sheets <- str_replace_all(sheets, " ", "_")
+names(M_DONOR_8) <- sheets
+
+M_DONOR_8m <- do.call("rbind", M_DONOR_8)
+names(M_DONOR_8m) <- c("PeakNum", "Sample", "Name", "Formula", "RTs", "1st Dimension Time", "2nd Dimension Time", "Similarity",
+                   "Area", "Height", "QuantMass", "BaseMass", "QuantSN", "PeakSN",
+                   "Type", "Conc", "ConcUnits")
+```
+
+```{r split_RTs8}
+RT1 <- as.numeric(
+         unlist(
+           lapply(strsplit(M_DONOR_8m$RTs, ","), FUN = "[[", 1)
+         )
+       )
+RT2 <- as.numeric(
+         unlist(
+           lapply(strsplit(M_DONOR_8m$RTs, ","), FUN = "[[", 2)
+         )
+       )
+M_DONOR_8m <- data.frame(M_DONOR_8m[, c(1:4, 6:17)], RT1 = RT1, RT2 = RT2)
+```
+
+```{r samples8}
+unique(M_DONOR_8m$Sample)
+save(file = "dat/M_DONOR_8.rda", M_DONOR_8m)
+```
+
+### Now Do M_DONOR_9
+
+```{r load_data8}
+sheets <- excel_sheets("MORGUE/M_DONOR_9.xlsx")  # note: spaces in names
+M_DONOR_9 <- lapply(sheets, FUN = function(x) {
+           read_xlsx(path = "MORGUE/M_DONOR_9.xlsx",
+                     sheet = x) })
+sheets <- str_replace_all(sheets, " ", "_")
+names(M_DONOR_9) <- sheets
+
+M_DONOR_9m <- do.call("rbind", M_DONOR_9)
+names(M_DONOR_9m) <- c("PeakNum", "Sample", "Name", "Formula", "RTs","1st Dimension Time","2nd Dimension Time", "Similarity",
+                   "Area", "Height", "QuantMass", "BaseMass", "QuantSN", "PeakSN",
+                   "Type", "Conc", "ConcUnits")
+```
+
+```{r}
+#M_DONOR_9_repl
+#M_DONOR_9_cont
+#M_DONOR_9 <- c(M_DONOR_9_repl, M_DONOR_9_contr)   # before the do.call("rbind") line
+```
+
+
+```{r split_RTs9}
+RT1 <- as.numeric(
+         unlist(
+           lapply(strsplit(M_DONOR_9m$RTs, ","), FUN = "[[", 1)
+         )
+       )
+RT2 <- as.numeric(
+         unlist(
+           lapply(strsplit(M_DONOR_9m$RTs, ","), FUN = "[[", 2)
+         )
+       )
+M_DONOR_9m <- data.frame(M_DONOR_9m[, c(1:4, 6:17)], RT1 = RT1, RT2 = RT2)
+```
+
+```{r samples9}
+unique(M_DONOR_9m$Sample)
+save(file = "dat/M_DONOR_9.rda", M_DONOR_9m)
+```
+
+
